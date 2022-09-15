@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kaimo handlock recorder demo</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.9/theme-chalk/index.css">
+    <style>
+        * { 
+            padding: 0;
+            margin: 0; 
+        }
+        html, body { 
+            width: 100%; 
+            height: 100%;
+            overflow: hidden;
+        }
+        #container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            padding-top: 100%;
+            height: 0px;
+            background-color: white;
+        }
+        .control {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <div class="control">
+        <button id="cancelBtn" class="el-button el-button--mini el-button--danger">取消</button>
+    </div>
+    <script src="../lib/kaimo-handlock-umd.js"></script>
+    <script>
+        // KaimoHandlock是打包暴露出来的，创建一个Recorder实例
+        var recorder = new KaimoHandlock.Recorder({
+            container: document.querySelector('#container'),
+        });
+        console.log(recorder)
+        function recorded(res) {
+            if(res.err){
+                console.error(res.err)
+                recorder.clearPath();
+                if(res.err !== KaimoHandlock.Recorder.ERR_USER_CANCELED){
+                    recorder.record().then(recorded);
+                }
+            }else{
+                console.log("密码字符串：", res.records)
+                recorder.record().then(recorded);
+            }  
+        }
+
+        recorder.record().then(recorded);
+        
+        // 点击取消
+        cancelBtn.onclick = function(){
+            recorder.cancel();
+            recorder.clearPath();
+        }
+    </script>
+</body>
+</html>

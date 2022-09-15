@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kaimo handlock locker demo</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.9/theme-chalk/index.css">
+    <style>
+        * { 
+            padding: 0;
+            margin: 0; 
+        }
+        html, body { 
+            width: 100%; 
+            height: 100%;
+            overflow: hidden;
+        }
+        #container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            padding-top: 100%;
+            height: 0px;
+            background-color: white;
+        }
+        .control {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <div class="control">
+        <button id="setPasswordBtn" class="el-button el-button--mini">设置密码</button>
+        <button id="checkPasswordBtn" class="el-button el-button--mini">验证密码</button>
+    </div>
+    <script src="../lib/kaimo-handlock-umd.js"></script>
+    <script>
+        var password = localStorage.getItem('kaimo_handlock_passwd') || '1221322322';
+        // KaimoHandlock是打包暴露出来的，创建一个Locker实例
+        var locker = new KaimoHandlock.Locker({
+            container: document.querySelector('#container'),
+            check: {
+                checked: function(res){
+                    locker.clearPath();
+                    console.log("checked--->", res)
+                    if(res.err){
+                        if(res.err === KaimoHandlock.Locker.ERR_PASSWORD_MISMATCH){
+                            console.error("密码错误，请重新绘制！")
+                        }else{
+                            console.error(res.err)
+                        }
+                    }else{
+                        console.log("密码正确！")
+                    }
+                },
+            },
+            update:{
+                beforeRepeat: function(res){
+                    locker.clearPath();
+                    if(res.err){
+                        console.log(`请连接至少${locker.options.minPoints}个点`)
+                    }else{
+                        console.log("请再次绘制相同图案")
+                    }
+                },
+                afterRepeat: function(res){
+                    locker.clearPath();
+                    if(res.err){
+                        if(res.err === KaimoHandlock.Locker.ERR_PASSWORD_MISMATCH){
+                            console.log("两次绘制的图形不一致，请重新绘制！")
+                        }else{
+                            console.log(`请连接至少${locker.options.minPoints}个点`)
+                        }
+                    }else{
+                        password = res.records;
+                        localStorage.setItem('kaimo_handlock_passwd', password);
+                        console.log("密码更新成功：", password)
+                    }
+                },
+            }
+        });
+        console.log(locker)
+        
+        // 点击设置密码
+        setPasswordBtn.onclick = function(){
+            setPasswordBtn.classList.add("el-button--success");
+            checkPasswordBtn.classList.remove("el-button--success");
+            locker.clearPath();
+            locker.update();
+        }
+        // 点击验证密码
+        checkPasswordBtn.onclick = function(){
+            checkPasswordBtn.classList.add("el-button--success");
+            setPasswordBtn.classList.remove("el-button--success");
+            locker.clearPath();
+            locker.check(password);
+        }
+    </script>
+</body>
+</html>
